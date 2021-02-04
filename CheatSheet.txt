@@ -1,0 +1,8 @@
+# Postgres Server
+pg_ctl -D "D:\Program Files\PostgreSQL\13\data" start
+pg_ctl -D "D:\Program Files\PostgreSQL\13\data" stop
+pg_ctl -D "D:\Program Files\PostgreSQL\13\data" restart
+
+#Login as Superuse
+psql -U postgres 
+(pw is 'postgres')
