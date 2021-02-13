@@ -1,8 +1,11 @@
-# Postgres Server
+// Postgres Server
 pg_ctl -D "D:\Program Files\PostgreSQL\13\data" start
 pg_ctl -D "D:\Program Files\PostgreSQL\13\data" stop
 pg_ctl -D "D:\Program Files\PostgreSQL\13\data" restart
 
-#Login as Superuse
+// Login as Superuser
 psql -U postgres 
 (pw is 'postgres')
+
+// Create a migration file
+npx typeorm migration:create -n <name>

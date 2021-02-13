@@ -1,41 +1,55 @@
-import "reflect-metadata";
-import { MikroORM } from "@mikro-orm/core";
-import { __prod__ } from "./constants";
-import microConfig from "./mikro-orm.config";
-import express from "express";
 import { ApolloServer } from "apollo-server-express";
+import connectRedis from "connect-redis";
+import cors from "cors";
+import express from "express";
+import session from "express-session";
+import Redis from "ioredis";
+import 'reflect-metadata'; //do not remove, needed by typeorm
 import { buildSchema } from "type-graphql";
-import { HelloResolver } from "./resolvers/hello";
+import { createConnection } from 'typeorm';
+import { COOKIE_NAME, __prod__ } from "./constants";
+import { Post } from "./entities/Post";
+import { User } from "./entities/User";
 import { PostResolver } from "./resolvers/post";
 import { UserResolver } from "./resolvers/user";
-import redis from "redis";
-import session from "express-session";
-import connectRedis from "connect-redis";
 import { MyContext } from "./types";
-import cors from 'cors'
+import path from 'path'
 
 const main = async () => {
-  const orm = await MikroORM.init(microConfig); //connect DB
-  await orm.getMigrator().up(); //run migrations
+  const conn = await createConnection({
+    type: 'postgres',
+    database: 'lireddit2',
+    username: 'postgres',
+    password: 'postgres',
+    logging: true,
+    synchronize: true,
+    migrations: [path.join(__dirname, './migrations/*')],
+    entities: [Post, User]
+  })
+  // await Post.delete({})
+  await conn.runMigrations()
 
   const app = express();
 
   const RedisStore = connectRedis(session);
-  const redisClient = redis.createClient();
+  const redis = new Redis();
 
-  app.use(cors({ //fixes cors error on all routes 
-    origin: 'http://localhost:3000',
-    credentials: true
-  }))
+  app.use(
+    cors({
+      //fixes cors error on all routes
+      origin: "http://localhost:3000",
+      credentials: true,
+    })
+  );
 
   //applying redis middleware before apollo is important
   //because we use it inside apollo, and the way we add middleware is
   //the sequence it will run
   app.use(
     session({
-      name: "qid",
+      name: COOKIE_NAME,
       store: new RedisStore({
-        client: redisClient,
+        client: redis,
         disableTouch: true, //disables TTL refresh
       }),
       cookie: {
@@ -52,13 +66,13 @@ const main = async () => {
 
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
-      resolvers: [HelloResolver, PostResolver, UserResolver],
+      resolvers: [ PostResolver, UserResolver],
       validate: false,
     }),
     context: ({ req, res }): MyContext => ({
-      em: orm.em,
       req,
       res,
+      redis
     }),
   });
 
