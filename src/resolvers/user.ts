@@ -3,10 +3,12 @@ import {
   Arg,
   Ctx,
   Field,
+  FieldResolver,
   Mutation,
   ObjectType,
   Query,
-  Resolver
+  Resolver,
+  Root,
 } from "type-graphql";
 import { v4 } from "uuid";
 import { COOKIE_NAME, FORGET_PASSWORD_PREFIX } from "../constants";
@@ -26,8 +28,18 @@ class UserResponse {
   user?: User;
 }
 
-@Resolver()
+@Resolver(User)
 export class UserResolver {
+  @FieldResolver(() => String)
+  email(@Root() user: User, @Ctx() { req }: MyContext) {
+    // lock down the email so only the user can fetch his own
+    if(req.session.userId === user.id){
+      return user.email
+    }else{
+      return ""
+    }
+  }
+
   @Mutation(() => UserResponse)
   async changePassword(
     @Arg("token") token: string,
@@ -134,8 +146,7 @@ export class UserResolver {
         username: options.username,
         email: options.email,
         password: hashedPassword,
-      }).save()
-
+      }).save();
     } catch (e) {
       if ((e.code = "23505")) {
         return {

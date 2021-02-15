@@ -4,30 +4,31 @@ import cors from "cors";
 import express from "express";
 import session from "express-session";
 import Redis from "ioredis";
-import 'reflect-metadata'; //do not remove, needed by typeorm
+import "reflect-metadata"; //do not remove, needed by typeorm
 import { buildSchema } from "type-graphql";
-import { createConnection } from 'typeorm';
+import { createConnection } from "typeorm";
 import { COOKIE_NAME, __prod__ } from "./constants";
 import { Post } from "./entities/Post";
 import { User } from "./entities/User";
 import { PostResolver } from "./resolvers/post";
 import { UserResolver } from "./resolvers/user";
 import { MyContext } from "./types";
-import path from 'path'
+import path from "path";
+import { Updoot } from "./entities/Updoot";
 
 const main = async () => {
   const conn = await createConnection({
-    type: 'postgres',
-    database: 'lireddit2',
-    username: 'postgres',
-    password: 'postgres',
+    type: "postgres",
+    database: "lireddit2",
+    username: "postgres",
+    password: "postgres",
     logging: true,
     synchronize: true,
-    migrations: [path.join(__dirname, './migrations/*')],
-    entities: [Post, User]
-  })
+    migrations: [path.join(__dirname, "./migrations/*")],
+    entities: [Post, User, Updoot],
+  });
   // await Post.delete({})
-  await conn.runMigrations()
+  await conn.runMigrations();
 
   const app = express();
 
@@ -66,13 +67,13 @@ const main = async () => {
 
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
-      resolvers: [ PostResolver, UserResolver],
+      resolvers: [PostResolver, UserResolver],
       validate: false,
     }),
     context: ({ req, res }): MyContext => ({
       req,
       res,
-      redis
+      redis,
     }),
   });
 

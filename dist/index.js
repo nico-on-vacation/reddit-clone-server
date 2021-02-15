@@ -27,16 +27,17 @@ const User_1 = require("./entities/User");
 const post_1 = require("./resolvers/post");
 const user_1 = require("./resolvers/user");
 const path_1 = __importDefault(require("path"));
+const Updoot_1 = require("./entities/Updoot");
 const main = () => __awaiter(void 0, void 0, void 0, function* () {
     const conn = yield typeorm_1.createConnection({
-        type: 'postgres',
-        database: 'lireddit2',
-        username: 'postgres',
-        password: 'postgres',
+        type: "postgres",
+        database: "lireddit2",
+        username: "postgres",
+        password: "postgres",
         logging: true,
         synchronize: true,
-        migrations: [path_1.default.join(__dirname, './migrations/*')],
-        entities: [Post_1.Post, User_1.User]
+        migrations: [path_1.default.join(__dirname, "./migrations/*")],
+        entities: [Post_1.Post, User_1.User, Updoot_1.Updoot],
     });
     yield conn.runMigrations();
     const app = express_1.default();
@@ -70,7 +71,7 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
         context: ({ req, res }) => ({
             req,
             res,
-            redis
+            redis,
         }),
     });
     apolloServer.applyMiddleware({ app, cors: false });
